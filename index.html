@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<title>WiFi Kas - Rekap Pembayaran</title>
+<style>
+:root{
+  --bg:#f1f5f9;--card:#ffffff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;
+  --pri:#2563eb;--pri2:#7c3aed;--ok:#16a34a;--bad:#dc2626;--radius:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0b1220;--card:#131c2e;--text:#e5e7eb;--muted:#94a3b8;--line:#243049}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;padding:22px 16px 60px}
+header h1{margin:0;font-size:1.4rem}
+header p{margin:4px 0 0;opacity:.85;font-size:.9rem}
+.wrap{max-width:1100px;margin:-40px auto 40px;padding:0 14px}
+.tabs{display:flex;gap:6px;overflow-x:auto;background:var(--card);padding:6px;border-radius:var(--radius);box-shadow:0 4px 18px rgba(0,0,0,.12);margin-bottom:14px}
+.tabs button{flex:1;white-space:nowrap;border:0;background:transparent;color:var(--muted);padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer;font-size:.95rem}
+.tabs button.active{background:var(--pri);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px}
+.card h2{margin:0 0 12px;font-size:1.05rem}
+label{display:block;font-size:.82rem;color:var(--muted);margin:10px 0 4px;font-weight:600}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font-size:1rem;font-family:inherit}
+input:focus,select:focus{outline:2px solid var(--pri);border-color:transparent}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.row{grid-template-columns:1fr}}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;font-size:.92rem;color:#fff;background:var(--pri)}
+.btn.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.btn.ok{background:var(--ok)}.btn.bad{background:var(--bad)}
+.btn.sm{padding:6px 10px;font-size:.8rem}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+@media(max-width:520px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.stat small{color:var(--muted);font-weight:600}
+.stat b{display:block;font-size:1.3rem;margin-top:4px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-size:.78rem;text-transform:uppercase}
+td.r,th.r{text-align:right}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-size:.85rem}
+.empty{color:var(--muted);text-align:center;padding:18px;font-size:.9rem}
+.badge{background:#dcfce7;color:#166534;border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700}
+.tab{display:none}.tab.active{display:block}
+.sticky{position:sticky;top:10px}
+
+/* ===== STRUK / LABEL 57 x 30 mm ===== */
+.stage{background:#cbd5e1;border-radius:10px;padding:16mm 20mm;display:flex;justify-content:center;overflow:hidden}
+#printZone{transform:scale(1.6);transform-origin:center;width:57mm;height:30mm;flex:none}
+.label{width:57mm;height:30mm;background:#fff;color:#000;padding:1.6mm 2mm;display:flex;flex-direction:column;
+  font-family:Arial,Helvetica,sans-serif;font-size:6.5pt;line-height:1.15;overflow:hidden}
+.l-top{display:flex;gap:1.5mm;flex:1;min-height:0}
+.l-txt{flex:1;min-width:0}
+.l-h{font-size:7.5pt;text-transform:uppercase;letter-spacing:.2px;border-bottom:.2mm solid #000;display:block;margin-bottom:.6mm;padding-bottom:.3mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-size:9pt;font-weight:800;margin:.4mm 0}
+.l-qr{width:15mm;height:15mm;flex:none;align-self:center}
+.l-qr img,.l-qr canvas{width:100%!important;height:100%!important;display:block}
+.l-qr canvas{display:none!important}
+.l-bar{width:100%;height:8.5mm;display:block;flex:none}
+.l-ft{text-align:center;font-size:5.5pt;font-weight:700;border-top:.2mm dashed #000;padding-top:.4mm;margin-top:.4mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@page{size:57mm 30mm;margin:0}
+@media print{
+  html,body{width:57mm;height:30mm;margin:0;padding:0;background:#fff}
+  body *{visibility:hidden}
+  #printZone,#printZone *{visibility:visible}
+  #printZone{position:fixed;left:0;top:0;transform:none}
+  header,.wrap{margin:0}
+}
+
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;padding:10px 18px;border-radius:999px;transition:.3s;z-index:9;font-size:.9rem}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📶 WiFi Kas</h1>
+  <p>Rekap pembayaran WiFi • cetak struk thermal 57×30 mm • QR / barcode • kirim digital</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs" id="tabs">
+    <button data-tab="bayar" class="active">💳 Bayar</button>
+    <button data-tab="rekap">📊 Rekap</button>
+    <button data-tab="pelanggan">👥 Pelanggan</button>
+    <button data-tab="setelan">⚙️ Pengaturan</button>
+  </div>
+
+  <div class="grid">
+    <div>
+      <!-- ========== TAB BAYAR ========== -->
+      <section class="tab active" id="tab-bayar">
+        <div class="card">
+          <h2>Catat Pembayaran Baru</h2>
+          <form id="fBayar" onsubmit="return false">
+            <label>Pelanggan</label>
+            <select id="bCust" required></select>
+            <div class="row">
+              <div><label>Periode (bulan)</label><input type="month" id="bPeriode" required></div>
+              <div><label>Jumlah (Rp)</label><input type="number" id="bJumlah" min="0" required></div>
+            </div>
+            <div class="row">
+              <div><label>Metode</label>
+                <select id="bMetode"><option>Tunai</option><option>Transfer</option><option>QRIS</option><option>E-Wallet</option></select></div>
+              <div><label>Tanggal bayar</label><input type="date" id="bTgl" required></div>
+            </div>
+            <div class="btns">
+              <button class="btn ok" id="btnSimpanCetak">💾 Simpan &amp; Cetak</button>
+              <button class="btn" id="btnSimpan">Simpan saja</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>Pembayaran Terakhir</h2>
+          <div class="table-wrap"><table id="tLast"></table></div>
+        </div>
+      </section>
+
+      <!-- ========== TAB REKAP ========== -->
+      <section class="tab" id="tab-rekap">
+        <div class="stats">
+          <div class="stat"><small>Total masuk</small><b id="sTotal">Rp 0</b></div>
+          <div class="stat"><small>Transaksi</small><b id="sCount">0</b></div>
+          <div class="stat"><small>Belum bayar</small><b id="sBelum">0</b></div>
+        </div>
+        <div class="card">
+          <h2>Rekap Pembayaran</h2>
+          <div class="row">
+            <div><label>Bulan</label><input type="month" id="rBulan"></div>
+            <div><label>Cari nama / nomor</label><input type="search" id="rCari" placeholder="ketik untuk mencari..."></div>
+          </div>
+          <div class="table-wrap" style="margin-top:10px"><table id="tRekap"></table></div>
+          <div class="btns">
+            <button class="btn sec" id="btnCsv">⬇️ Ekspor CSV</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Belum Bayar bulan ini</h2>
+          <div class="chips" id="belumList"></div>
+        </div>
+      </section>
+
+      <!-- ========== TAB PELANGGAN ========== -->
+      <section class="tab" id="tab-pelanggan">
+        <div class="card">
+          <h2 id="cTitle">Tambah Pelanggan</h2>
+          <form id="fCust" onsubmit="return false">
+            <input type="hidden" id="cId">
+            <label>Nama</label><input id="cNama" required>
+            <div class="row">
+              <div><label>No. WhatsApp</label><input id="cHp" placeholder="08123456789" inputmode="tel"></div>
+              <div><label>Paket</label><input id="cPaket" placeholder="mis. 10 Mbps"></div>
+            </div>
+            <label>Tarif per bulan (Rp)</label><input type="number" id="cTarif" min="0" required>
+            <div class="btns">
+              <button class="btn" id="btnCust">Simpan Pelanggan</button>
+              <button class="btn sec" id="btnCustBatal" type="button">Batal</button>
+            </div>
+          </form>
+        </div>
+        <div class="card">
+          <h2>Daftar Pelanggan</h2>
+          <div class="table-wrap"><table id="tCust"></table></div>
+        </div>
+      </section>
+
+      <!-- ========== TAB SETELAN ========== -->
+      <section class="tab" id="tab-setelan">
+        <div class="card">
+          <h2>Identitas &amp; Struk</h2>
+          <label>Nama usaha (tampil di struk)</label><input id="sUsaha">
+          <label>Teks bawah struk</label><input id="sFooter" maxlength="40">
+          <label>Kode di struk</label>
+          <select id="sMode"><option value="qr">QR Code (di samping)</option><option value="barcode">Barcode (di bawah)</option></select>
+          <div class="btns"><button class="btn" id="btnSetel">Simpan Pengaturan</button></div>
+        </div>
+        <div class="card">
+          <h2>Cadangan Data</h2>
+          <p style="color:var(--muted);font-size:.9rem;margin-top:0">Data tersimpan di browser perangkat ini. Rutin unduh cadangan agar aman.</p>
+          <div class="btns">
+            <button class="btn sec" id="btnBackup">⬇️ Unduh Cadangan (.json)</button>
+            <button class="btn sec" id="btnRestore">⬆️ Pulihkan dari file</button>
+            <button class="btn bad" id="btnReset">🗑️ Hapus semua data</button>
+          </div>
+          <input type="file" id="fileRestore" accept=".json" hidden>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========== PRATINJAU STRUK ========== -->
+    <aside class="sticky">
+      <div class="card">
+        <h2>Pratinjau Struk 57×30 mm</h2>
+        <div class="stage"><div id="printZone"><div class="label" id="label"></div></div></div>
+        <div class="btns">
+          <button class="btn" id="btnPrint">🖨️ Cetak</button>
+          <button class="btn sec" id="btnShare">📤 Bagikan Gambar</button>
+          <button class="btn sec" id="btnPng">🖼️ Unduh PNG</button>
+          <button class="btn ok" id="btnWa">💬 Kirim WhatsApp</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+/* ================= DATA ================= */
+const LS = 'wifikas.v1';
+const defData = () => ({ set:{usaha:'WiFi Rumahan',footer:'LUNAS - Terima kasih',mode:'qr'}, cust:[], pay:[] });
+let db = (function(){ try { return Object.assign(defData(), JSON.parse(localStorage.getItem(LS))||{}); } catch(e){ return defData(); } })();
+let cur = null; // pembayaran yang sedang dipratinjau
+const save = () => localStorage.setItem(LS, JSON.stringify(db));
+
+/* ================= HELPER ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rp = n => 'Rp ' + Number(n||0).toLocaleString('id-ID');
+const bulanNama = ym => { const [y,m]=ym.split('-'); return new Date(y,m-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'}); };
+const tglFmt = d => new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+const today = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const thisMonth = () => today().slice(0,7);
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2200); }
+function noStruk(tgl){
+  const d = tgl.replace(/-/g,'').slice(2); // yymmdd
+  const n = db.pay.filter(p=>p.no.startsWith('WF'+d)).length + 1;
+  return 'WF'+d+String(n).padStart(3,'0');
+}
+function waNum(hp){ hp=String(hp||'').replace(/\D/g,''); if(hp.startsWith('0')) hp='62'+hp.slice(1); return hp; }
+
+/* ================= TAB ================= */
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.id==='tab-'+b.dataset.tab));
+  renderAll();
+});
+
+/* ================= STRUK ================= */
+function showLabel(p){
+  cur = p;
+  const el = $('#label'), s = db.set;
+  if(!p){ el.innerHTML='<div style="margin:auto;color:#888;text-align:center;font-size:7pt">Pilih / simpan pembayaran<br>untuk melihat struk</div>'; return; }
+  const qr = s.mode==='qr';
+  el.innerHTML = `
+    <div class="l-top">
+      <div class="l-txt">
+        <b class="l-h">${esc(s.usaha)}</b>
+        <div>${esc(p.no)}</div>
+        <div class="nm">${esc(p.nama)}</div>
+        <div>${esc(bulanNama(p.periode))}</div>
+        <div class="amt">${rp(p.jumlah)}</div>
+        <div>${tglFmt(p.tgl)} • ${esc(p.metode)}</div>
+      </div>
+      ${qr?'<div class="l-qr" id="qrBox"></div>':''}
+    </div>
+    ${qr?'':'<svg class="l-bar" id="barSvg"></svg>'}
+    <div class="l-ft">${esc(s.footer)}</div>`;
+  if(qr){
+    new QRCode($('#qrBox'),{text:[s.usaha,p.no,p.nama,p.periode,p.jumlah,'LUNAS'].join('|'),width:120,height:120,correctLevel:QRCode.CorrectLevel.M});
+  } else {
+    const svg = $('#barSvg');
+    JsBarcode(svg,p.no,{format:'CODE128',height:34,width:2,displayValue:true,fontSize:14,margin:0});
+    const w=parseFloat(svg.getAttribute('width')), h=parseFloat(svg.getAttribute('height'));
+    svg.setAttribute('viewBox',`0 0 ${w} ${h}`); svg.removeAttribute('width'); svg.removeAttribute('height');
+  }
+}
+function pesanText(p){
+  return `*${db.set.usaha}*\nBUKTI PEMBAYARAN WIFI\n\nNo: ${p.no}\nNama: ${p.nama}\nPeriode: ${bulanNama(p.periode)}\nJumlah: ${rp(p.jumlah)}\nTanggal: ${tglFmt(p.tgl)}\nMetode: ${p.metode}\nStatus: LUNAS ✅\n\nTerima kasih 🙏`;
+}
+async function labelBlob(){
+  const c = await html2canvas($('#label'),{scale:8,backgroundColor:'#ffffff',
+    onclone:d=>{ const z=d.getElementById('printZone'); z.style.transform='none'; }});
+  return new Promise(r=>c.toBlob(r,'image/png'));
+}
+function needCur(){ if(!cur){ toast('Pilih pembayaran dulu'); return false; } return true; }
+
+$('#btnPrint').onclick = () => { if(needCur()) window.print(); };
+$('#btnPng').onclick = async () => {
+  if(!needCur()) return;
+  const b = await labelBlob(); const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='struk-'+cur.no+'.png'; a.click();
+};
+$('#btnShare').onclick = async () => {
+  if(!needCur()) return;
+  const blob = await labelBlob();
+  const file = new File([blob],'struk-'+cur.no+'.png',{type:'image/png'});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],text:pesanText(cur)}); }catch(e){}
+  } else { $('#btnPng').click(); toast('Perangkat tidak mendukung share, gambar diunduh'); }
+};
+$('#btnWa').onclick = () => {
+  if(!needCur()) return;
+  const c = db.cust.find(x=>x.id===cur.custId);
+  const num = c ? waNum(c.hp) : '';
+  window.open('https://wa.me/'+num+'?text='+encodeURIComponent(pesanText(cur)),'_blank');
+};
+
+/* ================= BAYAR ================= */
+function fillCustSelect(){
+  const s=$('#bCust'), v=s.value;
+  s.innerHTML = db.cust.length ? db.cust.map(c=>`<option value="${c.id}">${esc(c.nama)} ${c.paket?'('+esc(c.paket)+')':''}</option>`).join('')
+                              : '<option value="">- tambah pelanggan dulu -</option>';
+  if(v) s.value=v;
+}
+$('#bCust').onchange = () => { const c=db.cust.find(x=>x.id===$('#bCust').value); if(c) $('#bJumlah').value=c.tarif; };
+function simpanBayar(cetak){
+  const f=$('#fBayar'); if(!f.reportValidity()) return;
+  const c = db.cust.find(x=>x.id===$('#bCust').value);
+  if(!c){ toast('Pilih pelanggan'); return; }
+  const periode=$('#bPeriode').value, tgl=$('#bTgl').value;
+  if(db.pay.some(p=>p.custId===c.id && p.periode===periode) && !confirm('Pelanggan ini sudah tercatat bayar untuk periode tersebut. Tetap simpan?')) return;
+  const p = {no:noStruk(tgl),custId:c.id,nama:c.nama,periode,jumlah:+$('#bJumlah').value,metode:$('#bMetode').value,tgl};
+  db.pay.push(p); save(); showLabel(p); renderAll(); toast('Tersimpan: '+p.no);
+  if(cetak) setTimeout(()=>window.print(),400);
+}
+$('#btnSimpan').onclick=()=>simpanBayar(false);
+$('#btnSimpanCetak').onclick=()=>simpanBayar(true);
+
+function rowBtns(p){
+  return `<button class="btn sm sec" onclick="pilih('${p.no}')">Lihat</button>
+          <button class="btn sm" onclick="pilih('${p.no}');window.print()">Cetak</button>
+          <button class="btn sm bad" onclick="hapusBayar('${p.no}')">✕</button>`;
+}
+function pilih(no){ showLabel(db.pay.find(p=>p.no===no)); window.scrollTo({top:0,behavior:'smooth'}); }
+function hapusBayar(no){ if(!confirm('Hapus pembayaran '+no+'?')) return; db.pay=db.pay.filter(p=>p.no!==no); save(); if(cur&&cur.no===no) showLabel(null); renderAll(); }
+
+function renderLast(){
+  const l=[...db.pay].reverse().slice(0,8);
+  $('#tLast').innerHTML = l.length ? '<tr><th>No</th><th>Nama</th><th>Periode</th><th class="r">Jumlah</th><th></th></tr>' +
+    l.map(p=>`<tr><td>${esc(p.no)}</td><td>${esc(p.nama)}</td><td>${esc(bulanNama(p.periode))}</td><td class="r">${rp(p.jumlah)}</td><td>${rowBtns(p)}</td></tr>`).join('')
+    : '<tr><td class="empty">Belum ada pembayaran</td></tr>';
+}
+
+/* ================= REKAP ================= */
+function rekapData(){
+  const b=$('#rBulan').value, q=$('#rCari').value.toLowerCase();
+  return db.pay.filter(p=>(!b||p.periode===b) && (!q||(p.nama+p.no).toLowerCase().includes(q)));
+}
+function renderRekap(){
+  const d=rekapData(), total=d.reduce((a,p)=>a+p.jumlah,0), b=$('#rBulan').value;
+  $('#sTotal').textContent=rp(total); $('#sCount').textContent=d.length;
+  $('#tRekap').innerHTML = d.length ? '<tr><th>No</th><th>Tgl</th><th>Nama</th><th>Periode</th><th>Metode</th><th class="r">Jumlah</th><th></th></tr>' +
+    d.map(p=>`<tr><td>${esc(p.no)}</td><td>${tglFmt(p.tgl)}</td><td>${esc(p.nama)}</td><td>${esc(bulanNama(p.periode))}</td><td>${esc(p.metode)}</td><td class="r">${rp(p.jumlah)}</td><td>${rowBtns(p)}</td></tr>`).join('') +
+    `<tr><th colspan="5" class="r">TOTAL</th><th class="r">${rp(total)}</th><th></th></tr>`
+    : '<tr><td class="empty">Tidak ada data</td></tr>';
+  const sudah=new Set(db.pay.filter(p=>p.periode===b).map(p=>p.custId));
+  const belum=db.cust.filter(c=>!sudah.has(c.id));
+  $('#sBelum').textContent=belum.length;
+  $('#belumList').innerHTML = belum.length ? belum.map(c=>{
+    const msg=`Halo ${c.nama}, mengingatkan tagihan WiFi ${bulanNama(b||thisMonth())} sebesar ${rp(c.tarif)}. Terima kasih 🙏 - ${db.set.usaha}`;
+    return `<div class="chip">${esc(c.nama)} <a class="btn sm ok" target="_blank" href="https://wa.me/${waNum(c.hp)}?text=${encodeURIComponent(msg)}">Tagih</a></div>`;
+  }).join('') : '<div class="empty">Semua pelanggan sudah bayar 🎉</div>';
+}
+$('#rBulan').oninput=renderRekap; $('#rCari').oninput=renderRekap;
+$('#btnCsv').onclick=()=>{
+  const d=rekapData();
+  const csv=['No,Tanggal,Nama,Periode,Metode,Jumlah',...d.map(p=>[p.no,p.tgl,'"'+p.nama.replace(/"/g,'""')+'"',p.periode,p.metode,p.jumlah].join(','))].join('\n');
+  download('rekap-wifi-'+($('#rBulan').value||'semua')+'.csv',csv,'text/csv');
+};
+function download(name,text,type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click(); }
+
+/* ================= PELANGGAN ================= */
+function resetCust(){ $('#fCust').reset(); $('#cId').value=''; $('#cTitle').textContent='Tambah Pelanggan'; }
+$('#btnCust').onclick=()=>{
+  if(!$('#fCust').reportValidity()) return;
+  const id=$('#cId').value;
+  const o={nama:$('#cNama').value.trim(),hp:$('#cHp').value.trim(),paket:$('#cPaket').value.trim(),tarif:+$('#cTarif').value};
+  if(id){ Object.assign(db.cust.find(c=>c.id===id),o); } else db.cust.push({id:uid(),...o});
+  save(); resetCust(); renderAll(); toast('Pelanggan tersimpan');
+};
+$('#btnCustBatal').onclick=resetCust;
+function editCust(id){
+  const c=db.cust.find(x=>x.id===id);
+  $('#cId').value=c.id;$('#cNama').value=c.nama;$('#cHp').value=c.hp;$('#cPaket').value=c.paket;$('#cTarif').value=c.tarif;
+  $('#cTitle').textContent='Ubah Pelanggan'; window.scrollTo({top:0,behavior:'smooth'});
+}
+function hapusCust(id){ if(!confirm('Hapus pelanggan ini? (riwayat pembayaran tetap ada)')) return; db.cust=db.cust.filter(c=>c.id!==id); save(); renderAll(); }
+function renderCust(){
+  $('#tCust').innerHTML = db.cust.length ? '<tr><th>Nama</th><th>WA</th><th>Paket</th><th class="r">Tarif</th><th></th></tr>' +
+    db.cust.map(c=>`<tr><td>${esc(c.nama)}</td><td>${esc(c.hp)}</td><td>${esc(c.paket)}</td><td class="r">${rp(c.tarif)}</td>
+      <td><button class="btn sm sec" onclick="editCust('${c.id}')">Ubah</button> <button class="btn sm bad" onclick="hapusCust('${c.id}')">✕</button></td></tr>`).join('')
+    : '<tr><td class="empty">Belum ada pelanggan</td></tr>';
+}
+
+/* ================= PENGATURAN ================= */
+function loadSetel(){ $('#sUsaha').value=db.set.usaha; $('#sFooter').value=db.set.footer; $('#sMode').value=db.set.mode; }
+$('#btnSetel').onclick=()=>{
+  db.set={usaha:$('#sUsaha').value.trim()||'WiFi',footer:$('#sFooter').value.trim(),mode:$('#sMode').value};
+  save(); showLabel(cur); toast('Pengaturan disimpan');
+};
+$('#btnBackup').onclick=()=>download('cadangan-wifikas-'+today()+'.json',JSON.stringify(db,null,2),'application/json');
+$('#btnRestore').onclick=()=>$('#fileRestore').click();
+$('#fileRestore').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.cust||!d.pay) throw 0; db=Object.assign(defData(),d); save(); loadSetel(); showLabel(null); renderAll(); toast('Data dipulihkan'); }catch(x){ toast('File tidak valid'); } };
+  r.readAsText(f);
+};
+$('#btnReset').onclick=()=>{ if(confirm('Yakin hapus SEMUA data? Tidak bisa dibatalkan.')){ db=defData(); save(); loadSetel(); showLabel(null); renderAll(); } };
+
+/* ================= INIT ================= */
+function renderAll(){ fillCustSelect(); renderLast(); renderRekap(); renderCust(); }
+$('#bPeriode').value=thisMonth(); $('#bTgl').value=today(); $('#rBulan').value=thisMonth();
+loadSetel(); renderAll(); showLabel(null);
+$('#bCust').dispatchEvent(new Event('change'));
+</script>
+</body>
+</html>
